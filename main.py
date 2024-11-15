@@ -2,6 +2,12 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import filedialog
 from PIL import Image, ImageTk
+import os
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
+
+# llave: 4578123547854458
+# C0:    5877961021354763
 
 root = tk.Tk()
 root.geometry("600x600")
@@ -67,6 +73,38 @@ def cifradoECB(ruta, llave, C0):
 
 def cifradoCBC(ruta, llave, C0):
     messagebox.showinfo("info", "estas en modo CBC de cifrado")
+    llave = llave.encode("utf-8")   # Convierte a bytes la llave
+    C0 = C0.encode("utf-8")    # Convierte a bytes el vector inicial
+
+    # Abrir la imagen BMP en modo binario
+    with open(ruta, "rb") as f:
+        bmp_data = f.read()
+
+    # Separar la cabecera (primeros 54 bytes) y los datos de la imagen
+    header = bmp_data[:54]
+    pixel_data = bmp_data[54:]
+    
+    cifrado = AES.new(llave, AES.MODE_CBC, C0)
+
+    # Cifrar los datos de píxeles (rellenados para ser múltiplos de 16 bytes)
+    encrypted_pixel_data = cifrado.encrypt(pad(pixel_data, AES.block_size))
+
+    file_name, file_extension = os.path.splitext(ruta)
+    nuevoNombreArchivo = f"{file_name}_eCBC{file_extension}"
+
+    # Guardar la imagen cifrada con la misma cabecera y el C0 al final
+    with open(nuevoNombreArchivo, "wb") as f:
+        f.write(header + encrypted_pixel_data)
+        
+    labelArchivoSalida = tk.Label(root, text="\n\nImagen cifrada guardada en " + nuevoNombreArchivo)
+    labelArchivoSalida.pack()
+
+    img = Image.open(nuevoNombreArchivo)
+    img_tk = ImageTk.PhotoImage(img)
+    labelImg = tk.Label(root, image=img_tk,height=300, width=300)
+    labelImg.pack()  
+    labelImg.image = img_tk
+   
 
 def cifradoCFB(ruta, llave, C0):
     # Los messagebox solo son para confirmar que entran a la funcipon correcta
@@ -98,6 +136,42 @@ def descifradoECB(ruta, llave, C0):
 
 def descifradoCBC(ruta, llave, C0):
     messagebox.showinfo("info", "estas en modo CBC de descifrado")
+    llave = llave.encode("utf-8")   # Convierte a bytes la llave
+    C0 = C0.encode("utf-8")    # Convierte a bytes el vector inicial
+
+    # Abrir la imagen BMP en modo binario
+    with open(ruta, "rb") as f:
+        bmp_data = f.read()
+
+    # Separar la cabecera (primeros 54 bytes) y los datos de la imagen
+    header = bmp_data[:54]
+    pixel_data = bmp_data[54:]
+
+    
+
+     # Crear el descifrador AES en modo CBC
+    cipher = AES.new(llave, AES.MODE_CBC, C0)
+
+    # Descifrar y quitar el relleno de los datos de píxeles
+    decrypted_pixel_data = unpad(cipher.decrypt(pixel_data), AES.block_size)
+    
+    
+
+    file_name, file_extension = os.path.splitext(ruta)
+    nuevoNombreArchivo = f"{file_name}_dCBC{file_extension}"
+
+    # Guardar la imagen cifrada con la misma cabecera y el C0 al final
+    with open(nuevoNombreArchivo, "wb") as f:
+        f.write(header + decrypted_pixel_data)
+        
+    labelArchivoSalida = tk.Label(root, text="\n\nImagen cifrada guardada en " + nuevoNombreArchivo)
+    labelArchivoSalida.pack()
+
+    img = Image.open(nuevoNombreArchivo)
+    img_tk = ImageTk.PhotoImage(img)
+    labelImg = tk.Label(root, image=img_tk,height=300, width=300)
+    labelImg.pack()  
+    labelImg.image = img_tk
 
 def descifradoCFB(ruta, llave, C0):
     messagebox.showinfo("info", "estas en modo CFB de descifrado")
@@ -107,7 +181,7 @@ def descifradoOFB(ruta, llave, C0):
 
 
 
-def AES(proceso, modoOperacion, ruta, llave, C0):
+def algoritmoAES(proceso, modoOperacion, ruta, llave, C0):
     limpiarVentana()
     if proceso == "cifrado":
         messagebox.showinfo("info", "estás en: cifrado")
@@ -162,7 +236,7 @@ def enviar():
     
     buttonRegresarInicio = tk.Button(root, text="Volver al inicio", command=inicio)
     buttonRegresarInicio.pack(side="bottom")
-    buttonEnviarCampos = tk.Button(root, text="Enviar", command=lambda: AES(proceso, modoOperacion,archivoBMP, entryLlave.get(), entryC0.get()))
+    buttonEnviarCampos = tk.Button(root, text="Enviar", command=lambda: algoritmoAES(proceso, modoOperacion,archivoBMP, entryLlave.get(), entryC0.get()))
     buttonEnviarCampos.pack(side="bottom")
 
 
