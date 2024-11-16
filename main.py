@@ -1,14 +1,10 @@
 import tkinter as tk
-from tkinter import messagebox
 from tkinter import filedialog
 from PIL import Image, ImageTk
 import os
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 import hashlib
-
-# llave: 4578123547854458
-# C0:    5877961021354763
 
 root = tk.Tk()
 root.geometry("600x600")
@@ -71,11 +67,9 @@ def algoritmoAES(proceso, modoOperacion, ruta, llave, C0):
     llave = hashlib.md5(llave).hexdigest().encode("utf-8")
     C0 = C0.encode("utf-8")    # Convierte a bytes el vector inicial
 
-    # Abrir la imagen BMP en modo binario
     with open(ruta, "rb") as f:
         bmp_data = f.read()
 
-    # Separar la cabecera (primeros 54 bytes) y los datos de la imagen
     header = bmp_data[:54]
     pixel_data = bmp_data[54:]
 
