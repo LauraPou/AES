@@ -68,6 +68,7 @@ def buscarArchivo(labelArchivoEntrada,labelImg):
 def algoritmoAES(proceso, modoOperacion, ruta, llave, C0):
     limpiarVentana()
     llave = llave.encode("utf-8")
+    llave = hashlib.md5(llave).hexdigest().encode("utf-8")
     C0 = C0.encode("utf-8")    # Convierte a bytes el vector inicial
 
     # Abrir la imagen BMP en modo binario
