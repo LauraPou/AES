@@ -45,7 +45,7 @@ def inicio():
     radioOFB = tk.Radiobutton(root, text="OFB", variable=valueModoOperacion, value="OFB", font=("Arial", 14))
     radioOFB.pack()
 
-    buttonEnviar = tk.Button(root, text="Enviar", command=enviar, font=("Arial", 14))
+    buttonEnviar = tk.Button(root, text="Siguiente", command=enviar, font=("Arial", 14))
     buttonEnviar.pack()
 
 def limpiarVentana():
@@ -54,7 +54,7 @@ def limpiarVentana():
 
 def buscarArchivo(labelArchivoEntrada,labelImg):
     global archivoBMP
-    root.filename = filedialog.askopenfilename(title="Buscar imagen", filetypes=([("archivos bmp", "*.bmp")]), font=("Arial", 14))
+    root.filename = filedialog.askopenfilename(title="Buscar imagen", filetypes=([("archivos bmp", "*.bmp")]))
     labelArchivoEntrada.config(text= "Ruta del archivo seleccionado:\n"+root.filename, font=("Arial", 14))
     #labelArchivoEntrada.pack()
     img = Image.open(root.filename)
@@ -370,18 +370,22 @@ def algoritmoAES(proceso, modoOperacion, ruta, llave, C0):
 def enviar():
     proceso = valueProceso.get()
     modoOperacion = valueModoOperacion.get()
-    messagebox.showinfo("Elección",  "Has elegido:\n" + proceso + "\n"+ modoOperacion)
     limpiarVentana()
+
+    texto = "Has elegido " + proceso + " con " + modoOperacion
+    labelTitulo = tk.Label(root, text=texto , font=("Arial", 14))
+    labelTitulo.pack()
 
     labelLlave = tk.Label(root, text="Llave: ", font=("Arial", 14))
     labelLlave.pack()
     entryLlave = tk.Entry(root)
     entryLlave.pack()
     
-    labelC0 = tk.Label(root, text="Vector de inicialización (C0): ", font=("Arial", 14))
-    labelC0.pack()
-    entryC0 = tk.Entry(root)
-    entryC0.pack()
+    if(modoOperacion != 'ECB'):
+        labelC0 = tk.Label(root, text="Vector de inicialización (C0): ", font=("Arial", 14))
+        labelC0.pack()
+        entryC0 = tk.Entry(root)
+        entryC0.pack()
    
     labelArchivoEntrada = tk.Label(root, text="No se ha seleccionado ningún archivo", font=("Arial", 14))
     labelArchivoEntrada.pack()
@@ -394,7 +398,7 @@ def enviar():
     
     buttonRegresarInicio = tk.Button(root, text="Volver al inicio", command=inicio, font=("Arial", 14))
     buttonRegresarInicio.pack(side="bottom")
-    buttonEnviarCampos = tk.Button(root, text="Enviar", command=lambda: algoritmoAES(proceso, modoOperacion,archivoBMP, entryLlave.get(), entryC0.get()))
+    buttonEnviarCampos = tk.Button(root, text="Enviar", command=lambda: algoritmoAES(proceso, modoOperacion,archivoBMP, entryLlave.get(), entryC0.get()), font=("Arial", 14))
     buttonEnviarCampos.pack(side="bottom")
 
 inicio()
