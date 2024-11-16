@@ -5,6 +5,7 @@ from PIL import Image, ImageTk
 import os
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
+import hashlib
 
 # llave: 4578123547854458
 # C0:    5877961021354763
@@ -56,7 +57,6 @@ def buscarArchivo(labelArchivoEntrada,labelImg):
     global archivoBMP
     root.filename = filedialog.askopenfilename(title="Buscar imagen", filetypes=([("archivos bmp", "*.bmp")]))
     labelArchivoEntrada.config(text= "Ruta del archivo seleccionado:\n"+root.filename, font=("Arial", 14))
-    #labelArchivoEntrada.pack()
     img = Image.open(root.filename)
 
     img_tk = ImageTk.PhotoImage(img)  
@@ -65,305 +65,61 @@ def buscarArchivo(labelArchivoEntrada,labelImg):
     labelImg.image = img_tk
     archivoBMP = root.filename
 
-def cifradoECB(ruta, llave, C0):
-    messagebox.showinfo("info", "estás en modo ECB de cifrado")
-    llave = llave.encode("utf-8")   # Convierte a bytes la llave
-
-    # Abrir la imagen BMP en modo binario
-    with open(ruta, "rb") as f:
-        bmp_data = f.read()
-
-    # Separar la cabecera (primeros 54 bytes) y los datos de la imagen
-    header = bmp_data[:54]
-    pixel_data = bmp_data[54:]
-
-    # Cifrado con AES en modo ECB 
-    cifrado = AES.new(llave, AES.MODE_ECB)
-
-    # Cifrar los datos de píxeles (rellenados para ser múltiplos de 16 bytes)
-    encrypted_pixel_data = cifrado.encrypt(pad(pixel_data, AES.block_size))
-
-    file_name, file_extension = os.path.splitext(ruta)
-    nuevoNombreArchivo = f"{file_name}_eECB{file_extension}"
-
-    # Guardar la imagen cifrada con la misma cabecera
-    with open(nuevoNombreArchivo, "wb") as f:
-        f.write(header + encrypted_pixel_data)
-        
-    labelArchivoSalida = tk.Label(root, text="\n\nImagen cifrada guardada en " + nuevoNombreArchivo)
-    labelArchivoSalida.pack()
-
-    img = Image.open(nuevoNombreArchivo)
-    img_tk = ImageTk.PhotoImage(img)
-    labelImg = tk.Label(root, image=img_tk, height=300, width=300)
-    labelImg.pack()  
-    labelImg.image = img_tk
-
-def cifradoCBC(ruta, llave, C0):
-    messagebox.showinfo("info", "estas en modo CBC de cifrado")
-    llave = llave.encode("utf-8")   # Convierte a bytes la llave
-    C0 = C0.encode("utf-8")    # Convierte a bytes el vector inicial
-
-    # Abrir la imagen BMP en modo binario
-    with open(ruta, "rb") as f:
-        bmp_data = f.read()
-
-    # Separar la cabecera (primeros 54 bytes) y los datos de la imagen
-    header = bmp_data[:54]
-    pixel_data = bmp_data[54:]
-    
-    cifrado = AES.new(llave, AES.MODE_CBC, C0)
-    # Cifrar los datos de píxeles (rellenados para ser múltiplos de 16 bytes)
-    encrypted_pixel_data = cifrado.encrypt(pad(pixel_data, AES.block_size))
-
-    file_name, file_extension = os.path.splitext(ruta)
-    nuevoNombreArchivo = f"{file_name}_eCBC{file_extension}"
-
-    # Guardar la imagen cifrada con la misma cabecera y el C0 al final
-    with open(nuevoNombreArchivo, "wb") as f:
-        f.write(header + encrypted_pixel_data)
-        
-    labelArchivoSalida = tk.Label(root, text="\n\nImagen cifrada guardada en " + nuevoNombreArchivo)
-    labelArchivoSalida.pack()
-
-    img = Image.open(nuevoNombreArchivo)
-    img_tk = ImageTk.PhotoImage(img)
-    labelImg = tk.Label(root, image=img_tk,height=300, width=300)
-    labelImg.pack()  
-    labelImg.image = img_tk
-   
-def cifradoCFB(ruta, llave, C0):
-    messagebox.showinfo("info", "estas en modo CFC de cifrado")
-    llave = llave.encode("utf-8")   # Convierte a bytes la llave
-    C0 = C0.encode("utf-8")    # Convierte a bytes el vector inicial
-
-    # Abrir la imagen BMP en modo binario
-    with open(ruta, "rb") as f:
-        bmp_data = f.read()
-
-    # Separar la cabecera (primeros 54 bytes) y los datos de la imagen
-    header = bmp_data[:54]
-    pixel_data = bmp_data[54:]
-    
-    cifrado = AES.new(llave, AES.MODE_CFB, C0)
-
-    # Cifrar los datos de píxeles (SIN RELLENO)
-    encrypted_pixel_data = cifrado.encrypt(pixel_data)
-
-    file_name, file_extension = os.path.splitext(ruta)
-    nuevoNombreArchivo = f"{file_name}_eCFB{file_extension}"
-
-    # Guardar la imagen cifrada 
-    with open(nuevoNombreArchivo, "wb") as f:
-        f.write(header + encrypted_pixel_data)
-        
-    labelArchivoSalida = tk.Label(root, text="\n\nImagen cifrada guardada en " + nuevoNombreArchivo)
-    labelArchivoSalida.pack()
-
-    img = Image.open(nuevoNombreArchivo)
-    img_tk = ImageTk.PhotoImage(img)
-    labelImg = tk.Label(root, image=img_tk,height=300, width=300)
-    labelImg.pack()  
-    labelImg.image = img_tk
-
-def cifradoOFB(ruta, llave, C0):
-    messagebox.showinfo("info", "estás en modo OFB de cifrado")
-    
-    llave = llave.encode("utf-8")   # Convierte a bytes la llave
-    C0 = C0.encode("utf-8")    # Convierte a bytes el vector inicial
-
-    # Abrir la imagen BMP en modo binario
-    with open(ruta, "rb") as f:
-        bmp_data = f.read()
-
-    # Separar la cabecera (primeros 54 bytes) y los datos de la imagen
-    header = bmp_data[:54]
-    pixel_data = bmp_data[54:]
-
-    # Crear el cifrador AES en modo OFB
-    cifrado = AES.new(llave, AES.MODE_OFB, iv=C0)
-
-    # Cifrar los datos de píxeles
-    encrypted_pixel_data = cifrado.encrypt(pixel_data)
-
-    # Guardar la imagen cifrada
-    file_name, file_extension = os.path.splitext(ruta)
-    nuevoNombreArchivo = f"{file_name}_eOFB{file_extension}"
-
-    with open(nuevoNombreArchivo, "wb") as f:
-        f.write(header + encrypted_pixel_data)
-
-    labelArchivoSalida = tk.Label(root, text="\n\nImagen cifrada guardada en " + nuevoNombreArchivo)
-    labelArchivoSalida.pack()
-
-    img = Image.open(nuevoNombreArchivo)
-    img_tk = ImageTk.PhotoImage(img)
-    labelImg = tk.Label(root, image=img_tk, height=300, width=300)
-    labelImg.pack()  
-    labelImg.image = img_tk
-
-def descifradoECB(ruta, llave, C0):
-    messagebox.showinfo("info", "estás en modo ECB de descifrado")
-    llave = llave.encode("utf-8")   # Convierte a bytes la llave
-
-    # Abrir la imagen BMP en modo binario
-    with open(ruta, "rb") as f:
-        bmp_data = f.read()
-
-    # Separar la cabecera (primeros 54 bytes) y los datos de la imagen cifrada
-    header = bmp_data[:54]
-    encrypted_pixel_data = bmp_data[54:]
-
-    # Descifrar con AES en modo ECB
-    cifrado = AES.new(llave, AES.MODE_ECB)
-
-    # Descifrar los datos de píxeles (y quitar el relleno)
-    decrypted_pixel_data = unpad(cifrado.decrypt(encrypted_pixel_data), AES.block_size)
-
-    file_name, file_extension = os.path.splitext(ruta)
-    nuevoNombreArchivo = f"{file_name}_dECB{file_extension}"
-
-    # Guardar la imagen descifrada con la misma cabecera
-    with open(nuevoNombreArchivo, "wb") as f:
-        f.write(header + decrypted_pixel_data)
-        
-    labelArchivoSalida = tk.Label(root, text="\n\nImagen descifrada guardada en " + nuevoNombreArchivo)
-    labelArchivoSalida.pack()
-
-    img = Image.open(nuevoNombreArchivo)
-    img_tk = ImageTk.PhotoImage(img)
-    labelImg = tk.Label(root, image=img_tk, height=300, width=300)
-    labelImg.pack()  
-    labelImg.image = img_tk
-
-def descifradoCBC(ruta, llave, C0):
-    messagebox.showinfo("info", "estas en modo CBC de descifrado")
-    llave = llave.encode("utf-8")   # Convierte a bytes la llave
-    C0 = C0.encode("utf-8")    # Convierte a bytes el vector inicial
-
-    # Abrir la imagen BMP en modo binario
-    with open(ruta, "rb") as f:
-        bmp_data = f.read()
-
-    # Separar la cabecera (primeros 54 bytes) y los datos de la imagen
-    header = bmp_data[:54]
-    pixel_data = bmp_data[54:]    
-
-     # Crear el descifrador AES en modo CBC
-    cipher = AES.new(llave, AES.MODE_CBC, C0)
-
-    # Descifrar y quitar el relleno de los datos de píxeles
-    decrypted_pixel_data = unpad(cipher.decrypt(pixel_data), AES.block_size)   
-
-    file_name, file_extension = os.path.splitext(ruta)
-    nuevoNombreArchivo = f"{file_name}_dCBC{file_extension}"
-
-    # Guardar la imagen descifrada
-    with open(nuevoNombreArchivo, "wb") as f:
-        f.write(header + decrypted_pixel_data)
-        
-    labelArchivoSalida = tk.Label(root, text="\n\nImagen cifrada guardada en " + nuevoNombreArchivo)
-    labelArchivoSalida.pack()
-
-    img = Image.open(nuevoNombreArchivo)
-    img_tk = ImageTk.PhotoImage(img)
-    labelImg = tk.Label(root, image=img_tk,height=300, width=300)
-    labelImg.pack()  
-    labelImg.image = img_tk
-
-def descifradoCFB(ruta, llave, C0):
-    messagebox.showinfo("info", "estas en modo CFB de descifrado")
-    llave = llave.encode("utf-8")   # Convierte a bytes la llave
-    C0 = C0.encode("utf-8")    # Convierte a bytes el vector inicial
-
-    # Abrir la imagen BMP en modo binario
-    with open(ruta, "rb") as f:
-        bmp_data = f.read()
-
-    # Separar la cabecera (primeros 54 bytes) y los datos de la imagen
-    header = bmp_data[:54]
-    pixel_data = bmp_data[54:]    
-
-     # Crear el descifrador AES en modo CBC
-    cipher = AES.new(llave, AES.MODE_CFB, C0)
-
-    decrypted_pixel_data = cipher.decrypt(pixel_data)        
-
-    file_name, file_extension = os.path.splitext(ruta)
-    nuevoNombreArchivo = f"{file_name}_dCFB{file_extension}"
-
-    # Guardar la imagen descifrada 
-    with open(nuevoNombreArchivo, "wb") as f:
-        f.write(header + decrypted_pixel_data)
-        
-    labelArchivoSalida = tk.Label(root, text="\n\nImagen cifrada guardada en " + nuevoNombreArchivo)
-    labelArchivoSalida.pack()
-
-    img = Image.open(nuevoNombreArchivo)
-    img_tk = ImageTk.PhotoImage(img)
-    labelImg = tk.Label(root, image=img_tk,height=300, width=300)
-    labelImg.pack()  
-    labelImg.image = img_tk
-
-def descifradoOFB(ruta, llave, C0):
-    messagebox.showinfo("info", "estás en modo OFB de descifrado")
-    
-    llave = llave.encode("utf-8")   # Convierte a bytes la llave
-    C0 = C0.encode("utf-8")    # Convierte a bytes el vector inicial
-
-    # Abrir la imagen BMP en modo binario
-    with open(ruta, "rb") as f:
-        bmp_data = f.read()
-
-    # Separar la cabecera (primeros 54 bytes) y los datos de la imagen cifrada
-    header = bmp_data[:54]
-    encrypted_pixel_data = bmp_data[54:]
-
-    # Crear el descifrador AES en modo OFB
-    cifrado = AES.new(llave, AES.MODE_OFB, iv=C0)
-
-    # Descifrar los datos de píxeles
-    decrypted_pixel_data = cifrado.decrypt(encrypted_pixel_data)
-
-    # Guardar la imagen descifrada
-    file_name, file_extension = os.path.splitext(ruta)
-    nuevoNombreArchivo = f"{file_name}_dOFB{file_extension}"
-
-    with open(nuevoNombreArchivo, "wb") as f:
-        f.write(header + decrypted_pixel_data)
-
-    labelArchivoSalida = tk.Label(root, text="\n\nImagen descifrada guardada en " + nuevoNombreArchivo)
-    labelArchivoSalida.pack()
-
-    img = Image.open(nuevoNombreArchivo)
-    img_tk = ImageTk.PhotoImage(img)
-    labelImg = tk.Label(root, image=img_tk, height=300, width=300)
-    labelImg.pack()  
-    labelImg.image = img_tk
-
 def algoritmoAES(proceso, modoOperacion, ruta, llave, C0):
     limpiarVentana()
-    if proceso == "cifrado":
-        # messagebox.showinfo("info", "estás en: cifrado")
-        if modoOperacion == "ECB":
-            cifradoECB(ruta, llave, C0)
-        if modoOperacion == "CBC":
-            cifradoCBC(ruta, llave, C0)
-        if modoOperacion == "CFB":
-            cifradoCFB(ruta, llave, C0)
-        if modoOperacion == "OFB":
-            cifradoOFB(ruta, llave, C0)            
+    llave = llave.encode("utf-8")
+    C0 = C0.encode("utf-8")    # Convierte a bytes el vector inicial
 
+    # Abrir la imagen BMP en modo binario
+    with open(ruta, "rb") as f:
+        bmp_data = f.read()
+
+    # Separar la cabecera (primeros 54 bytes) y los datos de la imagen
+    header = bmp_data[:54]
+    pixel_data = bmp_data[54:]
+
+    if modoOperacion == "ECB":
+            cifrado = AES.new(llave, AES.MODE_ECB)
+    if modoOperacion == "CBC":
+            cifrado = AES.new(llave, AES.MODE_CBC, C0)
+    if modoOperacion == "CFB":
+            cifrado = AES.new(llave, AES.MODE_CFB, C0)
+    if modoOperacion == "OFB":
+            cifrado = AES.new(llave, AES.MODE_OFB, C0)
+
+    if proceso == "cifrado":
+        if(modoOperacion == "ECB" or modoOperacion == "CBC"):
+            encrypted_pixel_data = cifrado.encrypt(pad(pixel_data, AES.block_size))
+        else:
+             encrypted_pixel_data = cifrado.encrypt(pixel_data)
+
+        file_name, file_extension = os.path.splitext(ruta)
+        nuevoNombreArchivo = f"{file_name}_e{modoOperacion}{file_extension}"
+        with open(nuevoNombreArchivo, "wb") as f:
+            f.write(header + encrypted_pixel_data)
+        labelArchivoSalida = tk.Label(root, text="\n\nImagen cifrada guardada en " + nuevoNombreArchivo)
+        labelArchivoSalida.pack()
+        
     if proceso == "descifrado":
-        # messagebox.showinfo("info2", "estas en descifrado")
-        if modoOperacion == "ECB":
-            descifradoECB(ruta, llave, C0)
-        if modoOperacion == "CBC":
-            descifradoCBC(ruta, llave, C0)
-        if modoOperacion == "CFB":
-            descifradoCFB(ruta, llave, C0)
-        if modoOperacion == "OFB":
-            descifradoOFB(ruta, llave, C0)
+        if(modoOperacion == "ECB" or modoOperacion == "CBC"):
+            decrypted_pixel_data = unpad(cifrado.decrypt(pixel_data), AES.block_size)
+        else:
+            decrypted_pixel_data = cifrado.decrypt(pixel_data)
+
+        decrypted_pixel_data = cifrado.decrypt(pixel_data)
+        file_name, file_extension = os.path.splitext(ruta)
+        nuevoNombreArchivo = f"{file_name}_d{modoOperacion}{file_extension}"
+        with open(nuevoNombreArchivo, "wb") as f:
+            f.write(header + decrypted_pixel_data)
+        labelArchivoSalida = tk.Label(root, text="\n\nImagen descifrada guardada en " + nuevoNombreArchivo)
+        labelArchivoSalida.pack()
+
+    img = Image.open(nuevoNombreArchivo)
+    img_tk = ImageTk.PhotoImage(img)
+    labelImg = tk.Label(root, image=img_tk, height=300, width=300)
+    labelImg.pack()  
+    labelImg.image = img_tk
+
     buttonRegresarInicio = tk.Button(root, text="Volver al inicio", command=inicio, font=("Arial", 14))
     buttonRegresarInicio.pack(side="bottom")
 
@@ -386,7 +142,9 @@ def enviar():
         labelC0.pack()
         entryC0 = tk.Entry(root)
         entryC0.pack()
-   
+    else:
+        entryC0 = tk.Entry(root, textvariable="0")
+
     labelArchivoEntrada = tk.Label(root, text="No se ha seleccionado ningún archivo", font=("Arial", 14))
     labelArchivoEntrada.pack()
     
